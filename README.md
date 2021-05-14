@@ -30,4 +30,4 @@
 |![灰色](https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_gray_6d6d6d.png "")|https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_gray_6d6d6d.png|
 |![绿色](https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_green_007200.png "")|https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_green_007200.png|
 |![橙色](https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_orange_ff7600.png "")|https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_orange_ff7600.png|
-|![白色](https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_white_ffffff.png "")|https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_white_ffffff.png|
+|![白色](/github/forkme_right_white_ffffff.png "白色")|https://cdn.jsdelivr.net/gh/imaliang/assets/github/forkme_right_white_ffffff.png|
