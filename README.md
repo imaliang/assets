@@ -21,7 +21,7 @@
 |样式|链接|
 |:---|:---|
 |![01/default.jpg](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/default.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/default.cur|
-|![01/pointer.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/pointer.cur "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/pointer.cur|
+|![01/pointer.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/pointer.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/01/pointer.cur|
 
 #### Fork me on GitHub
 |Fork me on GitHub|链接|
