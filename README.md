@@ -32,6 +32,8 @@
 |![04/Hand.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/04/Hand.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/04/Hand.cur|
 |![05/Arrow.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/05/Arrow.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/05/Arrow.cur|
 |![05/Hand.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/05/Hand.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/05/Hand.cur|
+|![06/Arrow.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/06/Arrow.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/06/Arrow.cur|
+|![06/Hand.cur](https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/06/Hand.jpg "")|https://cdn.jsdelivr.net/gh/imaliang/assets/mouse/06/Hand.cur|
 
 #### Fork me on GitHub
 |Fork me on GitHub|链接|
