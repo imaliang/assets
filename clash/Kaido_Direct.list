@@ -1,0 +1,14 @@
+# 直连列表
+
+# didi
+DOMAIN-SUFFIX,didiglobal.com
+DOMAIN-SUFFIX,intra.didiglobal.com
+DOMAIN-SUFFIX,didichuxing.com
+DOMAIN-SUFFIX,xiaojukeji.com
+
+#####################################
+
+DOMAIN-SUFFIX,cloudflare.com
+DOMAIN-SUFFIX,aliang.link
+DOMAIN-SUFFIX,ssdforum.org
+DOMAIN-SUFFIX,cnlang.org
