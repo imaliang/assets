@@ -8,7 +8,7 @@
 // @author       @Chen3861229 & aliang
 // @github       https://github.com/bpking1/embyExternalUrl
 // @match        */*
-// <script src="https://fastly.jsdelivr.net/gh/imaliang/assets@master/js/alistWebLaunchExternalPlayer.js"></script>
+// @header <script src="https://fastly.jsdelivr.net/gh/imaliang/assets@master/js/alistWebLaunchExternalPlayer.js"></script>
 // ==/UserScript==
 
 (function () {
