@@ -4,7 +4,7 @@
 // @name:zh      alistWebLaunchExternalPlayer
 // @name:zh-CN   alistWebLaunchExternalPlayer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.7
+// @version      1.0.7.1
 // @description  alist Web Launc hExternal Player
 // @description:zh-cn alistWeb 调用外部播放器, 注意自行更改 UI 中的包括/排除,或下面的 @match
 // @description:en  alist Web Launch External Player
@@ -35,19 +35,19 @@
             `<a id="${id}" class="" href="" title="${id.replace("icon-", "")}"><img class="" src="${imgSrc}"></a>`;
         const iconBaseUrl = "https://fastly.jsdelivr.net/gh/bpking1/embyExternalUrl@main/embyWebAddExternalUrl/icons";
         const diffLinks = [
-            { id: "icon-StellarPlayer", imgSrc: `${iconBaseUrl}/icon-StellarPlayer.webp` },
+            // { id: "icon-StellarPlayer", imgSrc: `${iconBaseUrl}/icon-StellarPlayer.webp` },
             { id: "icon-MPV", imgSrc: `${iconBaseUrl}/icon-MPV.webp` },
-            { id: "icon-DDPlay", imgSrc: `${iconBaseUrl}/icon-DDPlay.webp` },
+            // { id: "icon-DDPlay", imgSrc: `${iconBaseUrl}/icon-DDPlay.webp` },
         ];
         const sameLinks = [
-            { id: "icon-IINA", imgSrc: `${iconBaseUrl}/icon-IINA.webp` },
+            // { id: "icon-IINA", imgSrc: `${iconBaseUrl}/icon-IINA.webp` },
             { id: "icon-PotPlayer", imgSrc: `${iconBaseUrl}/icon-PotPlayer.webp` },
-            { id: "icon-VLC", imgSrc: `${iconBaseUrl}/icon-VLC.webp` },
-            { id: "icon-NPlayer", imgSrc: `${iconBaseUrl}/icon-NPlayer.webp` },
+            // { id: "icon-VLC", imgSrc: `${iconBaseUrl}/icon-VLC.webp` },
+            // { id: "icon-NPlayer", imgSrc: `${iconBaseUrl}/icon-NPlayer.webp` },
             { id: "icon-infuse", imgSrc: `${iconBaseUrl}/icon-infuse.webp` },
             { id: "icon-MXPlayer", imgSrc: `${iconBaseUrl}/icon-MXPlayer.webp` },
         ];
-        const links = [...sameLinks, ...diffLinks];
+        const links = [...diffLinks, ...sameLinks];
         if (useInnerIcons) {
             // add icons from Base64, script inner, this script size 13.5KB to 64KB
             const iconsExt = getIconsExt();
@@ -121,13 +121,13 @@
             "icon-PotPlayer": getPotUrl,
             "icon-MXPlayer": getMXUrl,
 
-            "icon-VLC": getVlcUrl,
-            "icon-NPlayer": getNPlayerUrl,
+            // "icon-VLC": getVlcUrl,
+            // "icon-NPlayer": getNPlayerUrl,
             "icon-Infuse": getInfuseUrl,
-            "icon-IINA": getIINAUrl,
+            // "icon-IINA": getIINAUrl,
             // diff
-            "icon-StellarPlayer": getStellarPlayerUrl,
-            "icon-DDPlay": getDDPlayUrl,
+            // "icon-StellarPlayer": getStellarPlayerUrl,
+            // "icon-DDPlay": getDDPlayUrl,
         };
         for (let i = 0; i < linksEle.length; i++) {
             const id = linksEle[i].id;
@@ -300,9 +300,9 @@
 
     // MPV
     function getMPVUrl(mediaInfo) {
-        let MPVUrl = `mpv://alist/${encodeURIComponent(mediaInfo.streamUrl)}`;
+        let MPVUrl = `mpv://alist/${encodeURI(mediaInfo.streamUrl)}`;
         if (mediaInfo.subUrl.length > 0) {
-            MPVUrl += `?suburl=${encodeURIComponent(mediaInfo.subUrl)}}`;
+            MPVUrl += `?suburl=${encodeURI(mediaInfo.subUrl)}}`;
         }
 
         if (osType == "ios" || osType == "android") {
