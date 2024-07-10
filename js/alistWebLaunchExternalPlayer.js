@@ -305,7 +305,7 @@
     function getMPVUrl(mediaInfo) {
         let MPVUrl = `mpv://alist/${encodeURI(mediaInfo.streamUrl)}`;
         if (mediaInfo.subUrl.length > 0) {
-            MPVUrl += `?suburl=${mediaInfo.subUrl}}`;
+            MPVUrl += `?suburl=${mediaInfo.subUrl}`;
         }
 
         if (osType == "ios" || osType == "android") {
