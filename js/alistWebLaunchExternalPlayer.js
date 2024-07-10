@@ -4,7 +4,7 @@
 // @name:zh      alistWebLaunchExternalPlayer
 // @name:zh-CN   alistWebLaunchExternalPlayer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.7.2
+// @version      1.0.7.3
 // @description  alist Web Launc hExternal Player
 // @description:zh-cn alistWeb 调用外部播放器, 注意自行更改 UI 中的包括/排除,或下面的 @match
 // @description:en  alist Web Launch External Player
