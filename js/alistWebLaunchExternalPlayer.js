@@ -4,7 +4,7 @@
 // @name:zh      alistWebLaunchExternalPlayer
 // @name:zh-CN   alistWebLaunchExternalPlayer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.7.1
+// @version      1.0.7.2
 // @description  alist Web Launc hExternal Player
 // @description:zh-cn alistWeb 调用外部播放器, 注意自行更改 UI 中的包括/排除,或下面的 @match
 // @description:en  alist Web Launch External Player
@@ -98,6 +98,9 @@
                 const subFileName = findSubFileName(alistRes.related);
                 if (subFileName) {
                     subUrl = `${urlObj.protocol}//${urlObj.host}${encodeURIComponent(streamUrl.replace(alistRes.name, subFileName))}`;
+                    console.log("111==" + subUrl);
+                    subUrl = `${encodeURIComponent(streamUrl.replace(alistRes.name, subFileName))}`;
+                    console.log("222==" + subUrl);
                 }
             }
         } else {
@@ -302,7 +305,7 @@
     function getMPVUrl(mediaInfo) {
         let MPVUrl = `mpv://alist/${encodeURI(mediaInfo.streamUrl)}`;
         if (mediaInfo.subUrl.length > 0) {
-            MPVUrl += `?suburl=${encodeURI(mediaInfo.subUrl)}}`;
+            MPVUrl += `?suburl=${mediaInfo.subUrl}}`;
         }
 
         if (osType == "ios" || osType == "android") {
