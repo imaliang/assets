@@ -21,6 +21,6 @@ dist/*
 .deploy*/
 package-lock.json
 yarn.lock
-clash/test.yaml
+clash/*.yaml
 clash/baseUtil.py
 clash/readme.txt
