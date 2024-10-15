@@ -222,7 +222,10 @@ EOF
 # 判断 HOST_IP 是否为空
 if [ -z "$HOST_IP" ]; then
   echo "HOST_IP 变量为空，开始停止进程..."
-  ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$LOG_FILE"
+  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$START_LOG_FILE"
+  pkill -u $USER
+  exit 0
 else
   echo "HOST_IP 变量的值是: $HOST_IP"
 fi
