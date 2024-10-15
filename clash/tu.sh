@@ -24,7 +24,7 @@ DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 
 
 # 检查是否有 "tuic" 的进程在运行
-pgrep -f "config.yaml" >> "$LOG_FILE"
+pgrep -f "config.json" >> "$LOG_FILE"
 process1_status=$?
 
 # 如果找到 "tuic" 进程，结束脚本的执行
