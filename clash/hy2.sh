@@ -213,10 +213,10 @@ echo -e "\e[1;32m-----------------------------\e[0m"
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR1="domains/${USERNAME}.ct8.pl/public_html" || WORKDIR1="domains/${USERNAME}.serv00.net/public_html"
 cat <<EOF > $WORKDIR1/cg.json
 {
-  "username": $USERNAME,
+  "username": "$USERNAME",
   "type": "hysteria2",
-  "ip": $HOST_IP,
-  "port": $PORT
+  "ip": "$HOST_IP",
+  "port": "$PORT"
 }
 EOF
 # 判断 HOST_IP 是否为空
