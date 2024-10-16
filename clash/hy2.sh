@@ -1,42 +1,121 @@
 #!/bin/bash
 
+clear
+export PORT=${PORT:-'60000'} 
 # 定义用户名变量
 USER_NAME=$USER
-
 # 定义日志文件路径
 LOG_FILE="/home/${USER_NAME}/hy2.log"
 START_LOG_FILE="/home/${USER_NAME}/hy2s.log"
 # 定义文件大小阈值（100 KB = 1024 * 100 字节）
 MAX_LOG_SIZE=102400  # 100kb
-
 # 检查日志文件是否存在并获取其大小
 if [ -f "$LOG_FILE" ]; then
     LOG_SIZE=$(stat -f%z "$LOG_FILE")
-    
     # 确保 LOG_SIZE 是有效的数字
     if [ -n "$LOG_SIZE" ] && [ "$LOG_SIZE" -ge "$MAX_LOG_SIZE" ]; then
         rm "$LOG_FILE"
     fi
 fi
-
 # 定义日期格式化为东八区
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 
+check_ip() {
+    local t_ip="$1"
+    local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/22"
+    local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
+    echo "$response"
+    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
+        return 1  # 返回1表示不可用
+    else
+        return 0  # 返回0表示可用
+    fi
+}
+
+HOSTNAME=$(hostname)
+
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR1="domains/${USER_NAME}.ct8.pl/public_html" || WORKDIR1="domains/${USER_NAME}.serv00.net/public_html"
+
+NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
+
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
 
 # 检查是否有 "hysteria2" 的进程在运行
 pgrep -f "config.yaml" >> "$LOG_FILE"
 process1_status=$?
-
 # 如果找到 "hysteria2" 进程，结束脚本的执行
 if [ $process1_status -eq 0 ]; then
     echo "hysteria2 进程正在运行..."
     echo "${DATE_FORMAT} - hysteria2 进程正在运行..." >> "$LOG_FILE"
-    exit 0  # 退出脚本
+    C_IP=$(grep '"ip"' $WORKDIR1/cg.json | sed 's/.*"ip": "\(.*\)",/\1/')
+    if check_ip "$C_IP"; then
+        exit 0  # 退出脚本
+    else
+        echo "${DATE_FORMAT} - 当前ip不可用 Reinstall hy2..." >> "$LOG_FILE"
+        echo "${DATE_FORMAT} - 当前ip不可用 Reinstall hy2..." >> "$START_LOG_FILE"
+    fi
 else
     # 如果没有找到 "hysteria2" 进程，则启动它
     echo "${DATE_FORMAT} - Reinstall hy2..." >> "$LOG_FILE"
     echo "${DATE_FORMAT} - Reinstall hy2..." >> "$START_LOG_FILE"
 fi
+
+
+ip=$(curl -s --max-time 1.5 ipv4.ip.sb)
+if [ -z "$ip" ]; then
+    for domain in "${DOMAINS[@]}"; do
+        echo "检查域名是否可用 $domain..."
+        if check_ip "$domain"; then
+            echo "域名 $domain 可用"
+            ip="$domain"
+            break  # 域名可用，跳出循环
+        else
+            echo "域名 $domain 不可用"
+        fi
+    done
+else 
+    if ! check_ip "$ip"; then
+        ip=""
+        for domain in "${DOMAINS[@]}"; do
+            echo "检查域名是否可用 $domain..."
+            if check_ip "$domain"; then
+                echo "域名 $domain 可用"
+                ip="$domain"
+                break  # 域名可用，跳出循环
+            else
+                echo "域名 $domain 不可用"
+            fi
+        done
+    fi
+fi
+if [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    HOST_IP="$ip"
+else
+    HOST_IP=$(host "$ip" | grep "has address" | awk '{print $4}')
+fi
+cat <<EOF > $WORKDIR1/cg.json
+{
+  "username": "$USER_NAME",
+  "type": "hysteria2",
+  "ip": "$HOST_IP",
+  "port": "$PORT"
+}
+EOF
+# 判断 HOST_IP 是否为空
+if [ -z "$HOST_IP" ]; then
+  echo "HOST_IP 变量为空，开始停止进程..."
+  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$LOG_FILE"
+  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$START_LOG_FILE"
+  pkill -u $USER
+  exit 0
+else
+  echo "HOST_IP 变量的值是: $HOST_IP"
+fi
+
+curl -o $WORKDIR1/index.html https://raw.githubusercontent.com/imaliang/assets/master/html/rocket/index.html
+echo -e "\e[1;32m自定义配置执行完成\e[0m"
+
+echo -e "\e[1;32m-----------------------------\e[0m"
 ###################################################################
 export LC_ALL=C
 export UUID=${UUID:-'fc44fe6a-f083-4591-9c03-f8d61dc3907f'} 
@@ -52,7 +131,7 @@ HOSTNAME=$(hostname)
 ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 
 # Download Dependency Files
-clear
+# clear
 echo -e "\e[1;35m正在安装中,请稍等...\e[0m"
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
@@ -102,30 +181,7 @@ wait
 # Generate cert
 openssl req -x509 -nodes -newkey ec:<(openssl ecparam -name prime256v1) -keyout "$WORKDIR/server.key" -out "$WORKDIR/server.crt" -subj "/CN=bing.com" -days 36500
 
-get_ip() {
-  HOSTNAME=$(hostname)
-  ip=$(curl -s --max-time 1.5 ipv4.ip.sb)
-  if [ -z "$ip" ]; then
-    ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$HOSTNAME" )
-  else
-    url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$ip/22"
-    response=$(curl -s --location --max-time 3 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
-    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
-        accessible=false
-    else
-        accessible=true
-    fi
-    if [ "$accessible" = false ]; then
-        ip=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "cache${BASH_REMATCH[1]}.serv00.com" || echo "$ip" )
-    fi
-  fi
-  echo "$ip"
-}
-if [[ "$(get_ip)" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    HOST_IP=$(get_ip)
-else
-    HOST_IP=$(host "$(get_ip)" | grep "has address" | awk '{print $4}')
-fi
+####################################
 
 # Generate configuration file
 cat << EOF > config.yaml
@@ -207,30 +263,4 @@ rm -rf config.yaml fake_useragent_0.2.0.json
 echo -e "\n\e[1;32mRuning done!\033[0m"
 echo -e "\e[1;35m原脚本地址：https://github.com/eooce/scripts\e[0m"
 
-
-################################################################### 自定义
-echo -e "\e[1;32m-----------------------------\e[0m"
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR1="domains/${USERNAME}.ct8.pl/public_html" || WORKDIR1="domains/${USERNAME}.serv00.net/public_html"
-cat <<EOF > $WORKDIR1/cg.json
-{
-  "username": "$USERNAME",
-  "type": "hysteria2",
-  "ip": "$HOST_IP",
-  "port": "$PORT"
-}
-EOF
-# 判断 HOST_IP 是否为空
-if [ -z "$HOST_IP" ]; then
-  echo "HOST_IP 变量为空，开始停止进程..."
-  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$LOG_FILE"
-  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$START_LOG_FILE"
-  pkill -u $USER
-  exit 0
-else
-  echo "HOST_IP 变量的值是: $HOST_IP"
-fi
-curl -o $WORKDIR1/index.html https://raw.githubusercontent.com/imaliang/assets/master/html/rocket/index.html
-
-echo -e "\e[1;32m自定义配置执行完成\e[0m"
-echo -e "\e[1;32m-----------------------------\e[0m"
 exit 0
