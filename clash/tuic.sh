@@ -8,13 +8,15 @@ export NEZHA_SERVER=${NEZHA_SERVER:-''}
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}             
 export NEZHA_KEY=${NEZHA_KEY:-''}                
 export PORT=${PORT:-'60000'} 
+export PASSWORD=${PASSWORD:-'admin'} 
+
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.serv00.net/public_html"
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="domains/${USERNAME}.serv00.net/public_html"
 
-LOG_FILE="${HTML_DIR}/hy.log"
+LOG_FILE="${HTML_DIR}/tu.log"
 check_log_file() {
     local log_file_path=$1
     if [ -f "$log_file_path" ]; then
@@ -38,7 +40,7 @@ add_log() {
 
 check_ip() {
     local t_ip="$1"
-    local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/22"
+    local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/443"
     local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
     echo "$response"
     if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
@@ -48,22 +50,22 @@ check_ip() {
     fi
 }
 
-# 检查是否有 "hysteria2" 的进程在运行
+# 检查是否有 "tuic" 的进程在运行
 C_IP=""
-process_status=$(pgrep -f "config.yaml" >/dev/null 2>&1; echo $?)
+process_status=$(pgrep -f "config.json" >/dev/null 2>&1; echo $?)
 if [ $process_status -eq 0 ]; then
-    echo "hy2 进程正在运行..."
-    add_log "${DATE_FORMAT} - hy2 is running..."
+    echo "tuic 进程正在运行..."
+    add_log "${DATE_FORMAT} - tuic is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
         C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
         if check_ip "$C_IP"; then
             exit 0
         else
-            add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
+            add_log "${DATE_FORMAT} - tuic not exist, start install tuic..."
         fi
     fi
 else
-    add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
+    add_log "${DATE_FORMAT} - tuic not exist, start install tuic..."
 fi
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
@@ -97,7 +99,7 @@ cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
   "num": "$NUM",
-  "type": "hysteria2",
+  "type": "tuic",
   "ip": "$HOST_IP",
   "port": "$PORT"
 }
@@ -122,53 +124,62 @@ echo -e "\e[1;32m自定义检查执行完成\e[0m"
 echo -e "\e[1;32m-----------------------------\e[0m"
 ###################################################################
 
-
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="/home/${USERNAME}/domains/${USERNAME}.ct8.pl/logs" || WORKDIR="/home/${USERNAME}/domains/${USERNAME}.serv00.net/logs"
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
 ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
+# devil binexec on > /dev/null 2>&1
 
 # Download Dependency Files
 # clear
 echo -e "\e[1;35m正在安装中,请稍等...\e[0m"
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
-    FILE_INFO=("https://download.hysteria.network/app/latest/hysteria-freebsd-arm64 web" "https://github.com/eooce/test/releases/download/ARM/swith npm")
+    FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd.sha256sum web" "https://github.com/eooce/test/releases/download/ARM/swith npm")
 elif [ "$ARCH" == "amd64" ] || [ "$ARCH" == "x86_64" ] || [ "$ARCH" == "x86" ]; then
-    FILE_INFO=("https://download.hysteria.network/app/latest/hysteria-freebsd-amd64 web" "https://github.com/eooce/test/releases/download/freebsd/npm npm")
+    FILE_INFO=("https://github.com/etjec4/tuic/releases/download/tuic-server-1.0.0/tuic-server-1.0.0-x86_64-unknown-freebsd web" "https://github.com/eooce/test/releases/download/freebsd/npm npm")
 else
     echo "Unsupported architecture: $ARCH"
     exit 1
 fi
 declare -A FILE_MAP
 generate_random_name() {
-    local chars=abcdefghijklmnopqrstuvwxyz1234567890
+    local chars=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
     local name=""
     for i in {1..6}; do
         name="$name${chars:RANDOM%${#chars}:1}"
     done
     echo "$name"
 }
-download_file() {
+
+download_with_fallback() {
     local URL=$1
     local NEW_FILENAME=$2
 
-    if command -v curl >/dev/null 2>&1; then
-        curl -L -sS -o "$NEW_FILENAME" "$URL"
-        echo -e "\e[1;32mDownloaded $NEW_FILENAME by curl\e[0m"
-    elif command -v wget >/dev/null 2>&1; then
+    curl -L -sS --max-time 3 -o "$NEW_FILENAME" "$URL" &
+    CURL_PID=$!
+    CURL_START_SIZE=$(stat -c%s "$NEW_FILENAME" 2>/dev/null || echo 0)
+    
+    sleep 1
+
+    CURL_CURRENT_SIZE=$(stat -c%s "$NEW_FILENAME" 2>/dev/null || echo 0)
+    
+    if [ "$CURL_CURRENT_SIZE" -le "$CURL_START_SIZE" ]; then
+        kill $CURL_PID 2>/dev/null
+        wait $CURL_PID 2>/dev/null
         wget -q -O "$NEW_FILENAME" "$URL"
-        echo -e "\e[1;32mDownloaded $NEW_FILENAME by wget\e[0m"
+        echo -e "\e[1;32mDownloading $NEW_FILENAME by wget\e[0m"
     else
-        echo -e "\e[1;33mNeither curl nor wget is available for downloading\e[0m"
-        exit 1
+        wait $CURL_PID 2>/dev/null
+        echo -e "\e[1;32mDownloading $NEW_FILENAME by curl\e[0m"
     fi
 }
+
 for entry in "${FILE_INFO[@]}"; do
     URL=$(echo "$entry" | cut -d ' ' -f 1)
     RANDOM_NAME=$(generate_random_name)
     NEW_FILENAME="$DOWNLOAD_DIR/$RANDOM_NAME"
     
-    download_file "$URL" "$NEW_FILENAME"
+    download_with_fallback "$URL" "$NEW_FILENAME"
     
     chmod +x "$NEW_FILENAME"
     FILE_MAP[$(echo "$entry" | cut -d ' ' -f 2)]="$NEW_FILENAME"
@@ -176,35 +187,33 @@ done
 wait
 
 # Generate cert
-openssl req -x509 -nodes -newkey ec:<(openssl ecparam -name prime256v1) -keyout "$WORKDIR/server.key" -out "$WORKDIR/server.crt" -subj "/CN=bing.com" -days 36500
-
-####################################
+openssl req -x509 -nodes -newkey ec:<(openssl ecparam -name prime256v1) -keyout $WORKDIR/server.key -out $WORKDIR/server.crt -subj "/CN=bing.com" -days 36500
 
 # Generate configuration file
-cat << EOF > config.yaml
-listen: $HOST_IP:$PORT
+cat > config.json <<EOL
+{
+  "server": "[::]:$PORT",
+  "users": {
+    "$UUID": "$PASSWORD"
+  },
+  "certificate": "$WORKDIR/server.crt",
+  "private_key": "$WORKDIR/server.key",
+  "congestion_control": "bbr",
+  "alpn": ["h3", "spdy/3.1"],
+  "udp_relay_ipv6": true,
+  "zero_rtt_handshake": false,
+  "dual_stack": true,
+  "auth_timeout": "3s",
+  "task_negotiation_timeout": "3s",
+  "max_idle_time": "10s",
+  "max_external_packet_size": 1500,
+  "gc_interval": "3s",
+  "gc_lifetime": "15s",
+  "log_level": "warn"
+}
+EOL
 
-tls:
-  cert: "$WORKDIR/server.crt"
-  key: "$WORKDIR/server.key"
-
-auth:
-  type: password
-  password: "$UUID"
-
-fastOpen: true
-
-masquerade:
-  type: proxy
-  proxy:
-    url: https://bing.com
-    rewriteHost: true
-
-transport:
-  udp:
-    hopInterval: 30s
-EOF
-
+# running files
 run() {
   if [ -e "$(basename ${FILE_MAP[npm]})" ]; then
     tlsPorts=("443" "8443" "2096" "2087" "2083" "2053")
@@ -224,42 +233,45 @@ run() {
   fi
 
   if [ -e "$(basename ${FILE_MAP[web]})" ]; then
-    nohup ./"$(basename ${FILE_MAP[web]})" server config.yaml >/dev/null 2>&1 &
+    nohup ./"$(basename ${FILE_MAP[web]})" -c config.json >/dev/null 2>&1 &
     sleep 1
-    pgrep -x "$(basename ${FILE_MAP[web]})" > /dev/null && echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) is running\e[0m" || { echo -e "\e[1;35m$(basename ${FILE_MAP[web]}) is not running, restarting...\e[0m"; pkill -f "$(basename ${FILE_MAP[web]})" && nohup ./"$(basename ${FILE_MAP[web]})" server config.yaml >/dev/null 2>&1 & sleep 2; echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) restarted\e[0m"; }
+    pgrep -x "$(basename ${FILE_MAP[web]})" > /dev/null && echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) is running\e[0m" || { echo -e "\e[1;35m$(basename ${FILE_MAP[web]}) is not running, restarting...\e[0m"; pkill -f "$(basename ${FILE_MAP[web]})" && nohup ./"$(basename ${FILE_MAP[web]})" -c config.json >/dev/null 2>&1 & sleep 2; echo -e "\e[1;32m$(basename ${FILE_MAP[web]}) restarted\e[0m"; }
   fi
 rm -rf "$(basename ${FILE_MAP[web]})" "$(basename ${FILE_MAP[npm]})"
 }
 run
 
-get_name() { if [ "$HOSTNAME" = "s1.ct8.pl" ]; then SERVER="CT8"; else SERVER=$(echo "$HOSTNAME" | cut -d '.' -f 1); fi; echo "$SERVER"; }
-NAME="$(get_name)-hy2"
+
+echo -e "\e[1;32m本机IP: $HOST_IP\033[0m"
 
 ISP=$(curl -s --max-time 2 https://speed.cloudflare.com/meta | awk -F\" '{print $26}' | sed -e 's/ /_/g' || echo "0")
+get_name() { if [ "$HOSTNAME" = "s1.ct8.pl" ]; then SERVER="CT8"; else SERVER=$(echo "$HOSTNAME" | cut -d '.' -f 1); fi; echo "$SERVER"; }
+NAME=$ISP-$(get_name)-tuic
 
-echo -e "\e[1;32mHysteria2安装成功\033[0m\n"
-echo -e "\e[1;32m本机IP：$HOST_IP\033[0m\n"
-echo -e "\e[1;33mV2rayN 或 Nekobox、小火箭等直接导入,跳过证书验证需设置为true\033[0m\n"
-echo -e "\e[1;32mhysteria2://$UUID@$HOST_IP:$PORT/?sni=www.bing.com&alpn=h3&insecure=1#$ISP-$NAME\033[0m\n"
-echo -e "\e[1;33mSurge\033[0m"
-echo -e "\e[1;32m$ISP-$NAME = hysteria2, $HOST_IP, $PORT, password = $UUID, skip-cert-verify=true, sni=www.bing.com\033[0m\n"
+echo -e "\e[1;32mTuic安装成功\033[0m\n"
+echo -e "\e[1;33mV2rayN 或 Nekobox，跳过证书验证需设置为true\033[0m\n"
+echo -e "\e[1;32mtuic://$UUID:$PASSWORD@$HOST_IP:$PORT?congestion_control=bbr&alpn=h3&sni=www.bing.com&udp_relay_mode=native&allow_insecure=1#$NAME\e[0m\n"
 echo -e "\e[1;33mClash\033[0m"
 cat << EOF
-- name: $ISP-$NAME
-  type: hysteria2
+- name: $NAME
+  type: tuic
   server: $HOST_IP
-  port: $PORT
-  password: $UUID
-  alpn:
-    - h3
-  sni: www.bing.com
+  port: $PORT                                                          
+  uuid: $UUID
+  password: $PASSWORD
+  alpn: [h3]
+  disable-sni: true
+  reduce-rtt: true
+  udp-relay-mode: native
+  congestion-controller: bbr
+  sni: www.bing.com                                
   skip-cert-verify: true
-  fast-open: true
 EOF
-rm -rf config.yaml fake_useragent_0.2.0.json
+rm -rf config.json fake_useragent_0.2.0.json
 echo -e "\n\e[1;32mRuning done!\033[0m"
 echo -e "\e[1;35m原脚本地址：https://github.com/eooce/scripts\e[0m"
 
-add_log "${DATE_FORMAT} - hy2 install success."
+
+################################################################### 自定义
 
 exit 0
