@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.1"
+VERSION="1.0.2"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -63,6 +63,8 @@ if [ $process_status -eq 0 ]; then
         C_TIME_S=$(date +%s)
         CHECK_TIME_S=$(TZ="Asia/Shanghai" date -d "$CHECK_TIME" +%s)
         T_DIFF=$((C_TIME_S - CHECK_TIME_S))
+        add_log "C_TIME_S ${C_TIME_S}"
+        add_log "C_TIME_S ${CHECK_TIME_S}"
         # 断是否已经过了一个小时（3600 秒）
         if [ "$T_DIFF" -gt 180 ]; then
             add_log "start check ip..."
