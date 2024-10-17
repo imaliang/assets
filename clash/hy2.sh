@@ -16,9 +16,11 @@ NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BAS
 LOG_FILE="${HTML_DIR}/hy.log"
 check_log_file() {
     local log_file_path=$1
-    local logSize=$(stat -f%z "$log_file_path")
-    if [[ -n $logSize && $logSize -ge 1024000 ]]; then
-        rm "$log_file_path"
+    if [ -f "$log_file_path" ]; then
+        local logSize=$(stat -f%z "$log_file_path")
+        if [[ -n $logSize && $logSize -ge 204800 ]]; then
+            rm "$log_file_path"
+        fi
     fi
 }
 check_log_file "$LOG_FILE"
