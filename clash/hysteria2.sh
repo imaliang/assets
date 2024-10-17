@@ -59,7 +59,7 @@ if [ $process_status -eq 0 ]; then
         if check_ip "$C_IP"; then
             exit 0
         else
-            add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
+            add_log "${DATE_FORMAT} - ip not available, start install hy2..."
         fi
     fi
 else
