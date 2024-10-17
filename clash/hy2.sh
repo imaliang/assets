@@ -11,7 +11,7 @@ USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="domains/${USERNAME}.serv00.net/public_html"
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.serv00.net/public_html"
 
 LOG_FILE="${HTML_DIR}/hy.log"
 check_log_file() {
@@ -122,7 +122,7 @@ echo -e "\e[1;32m-----------------------------\e[0m"
 ###################################################################
 
 
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="/home/${USERNAME}/domains/${USERNAME}.ct8.pl/logs" || WORKDIR="/home/${USERNAME}/domains/${USERNAME}.serv00.net/logs"
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
 ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs -r kill -9 > /dev/null 2>&1
 
