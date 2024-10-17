@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.4"
+VERSION="1.0.5"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
