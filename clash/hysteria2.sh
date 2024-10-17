@@ -1,7 +1,8 @@
 #!/bin/bash
 
 clear
-echo -e "\e[1;32mVersion-1.0\e[0m"
+VERSION="1.0.1"
+echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
 export NEZHA_SERVER=${NEZHA_SERVER:-''}      
@@ -26,7 +27,7 @@ check_log_file() {
 }
 check_log_file "$LOG_FILE"
 add_log() {
-    local new_content=$1
+    local new_content="${DATE_FORMAT} - ${VERSION} - ${1}"
     if [ -f "$LOG_FILE" ]; then
         existing_content=$(cat "$LOG_FILE")
         combined_content="$new_content\n$existing_content"
@@ -56,7 +57,7 @@ C_IP=""
 process_status=$(pgrep -f "config.yaml" >/dev/null 2>&1; echo $?)
 if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
-    add_log "${DATE_FORMAT} - hy2 is running..."
+    add_log "hy2 is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
         CHECK_TIME=$(grep '"check_time"' "$HTML_DIR/cg.json" | sed 's/.*"check_time": "\(.*\)",/\1/')
         C_TIME_S=$(date +%s)
@@ -64,7 +65,7 @@ if [ $process_status -eq 0 ]; then
         T_DIFF=$((C_TIME_S - CHECK_TIME_S))
         # 断是否已经过了一个小时（3600 秒）
         if [ "$T_DIFF" -gt 180 ]; then
-            add_log "${DATE_FORMAT} - start check ip..."
+            add_log "start check ip..."
             C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
             if check_ip "$C_IP"; then
                 cat <<EOF > $HTML_DIR/cg.json
@@ -79,12 +80,12 @@ if [ $process_status -eq 0 ]; then
 EOF
                 exit 0
             else
-                add_log "${DATE_FORMAT} - ip not available, start install hy2..."
+                add_log "ip not available, start install hy2..."
             fi
         fi
     fi
 else
-    add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
+    add_log "hy2 not exist, start install hy2..."
 fi
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
@@ -126,9 +127,8 @@ cat <<EOF > $HTML_DIR/cg.json
 EOF
 # 判断 HOST_IP 是否为空
 if [ -z "$HOST_IP" ]; then
-  add_log "${DATE_FORMAT} - not find available ip."
-  echo "找不到可用IP，开始停止进程..."
-  pkill -u $USERNAME
+  add_log "not find available ip."
+  echo "找不到可用IP..."
   exit 0
 else
   echo "找到可用IP: $HOST_IP"
@@ -282,6 +282,6 @@ rm -rf config.yaml fake_useragent_0.2.0.json
 echo -e "\n\e[1;32mRuning done!\033[0m"
 echo -e "\e[1;35m原脚本地址：https://github.com/eooce/scripts\e[0m"
 
-add_log "${DATE_FORMAT} - hy2 install success."
+add_log "hy2 install success."
 
 exit 0

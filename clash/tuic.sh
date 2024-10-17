@@ -1,7 +1,8 @@
 #!/bin/bash
 
 clear
-echo -e "\e[1;32mVersion-1.0\e[0m"
+VERSION="1.0.1"
+echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
 export NEZHA_SERVER=${NEZHA_SERVER:-''}      
@@ -28,7 +29,7 @@ check_log_file() {
 }
 check_log_file "$LOG_FILE"
 add_log() {
-    local new_content=$1
+    local new_content="${DATE_FORMAT} - ${VERSION} - ${1}"
     if [ -f "$LOG_FILE" ]; then
         existing_content=$(cat "$LOG_FILE")
         combined_content="$new_content\n$existing_content"
@@ -58,17 +59,17 @@ C_IP=""
 process_status=$(pgrep -f "config.json" >/dev/null 2>&1; echo $?)
 if [ $process_status -eq 0 ]; then
     echo "tuic 进程正在运行..."
-    add_log "${DATE_FORMAT} - tuic is running..."
+    add_log "tuic is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
         C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
         if check_ip "$C_IP"; then
             exit 0
         else
-            add_log "${DATE_FORMAT} - tuic not exist, start install tuic..."
+            add_log "tuic not exist, start install tuic..."
         fi
     fi
 else
-    add_log "${DATE_FORMAT} - tuic not exist, start install tuic..."
+    add_log "tuic not exist, start install tuic..."
 fi
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
@@ -109,9 +110,8 @@ cat <<EOF > $HTML_DIR/cg.json
 EOF
 # 判断 HOST_IP 是否为空
 if [ -z "$HOST_IP" ]; then
-  add_log "${DATE_FORMAT} - not find available ip."
-  echo "找不到可用IP，开始停止进程..."
-  pkill -u $USERNAME
+  add_log "not find available ip."
+  echo "找不到可用IP..."
   exit 0
 else
   echo "找到可用IP: $HOST_IP"
@@ -276,5 +276,5 @@ echo -e "\e[1;35m原脚本地址：https://github.com/eooce/scripts\e[0m"
 
 
 ################################################################### 自定义
-
+add_log "tuic install success."
 exit 0
