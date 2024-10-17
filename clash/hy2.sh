@@ -73,7 +73,7 @@ if [ -z "$ip" ]; then
         echo "检查域名是否可用 $domain"
         if check_ip "$domain"; then
             echo "域名 $domain 可用"
-            ip = "$domain"
+            ip="$domain"
             break  # 域名可用，跳出循环
         else
             echo "域名 $domain 不可用"
