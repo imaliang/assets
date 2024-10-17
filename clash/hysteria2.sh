@@ -11,6 +11,7 @@ export NEZHA_KEY=${NEZHA_KEY:-''}
 export PORT=${PORT:-'60000'} 
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
+DATE_FORMAT_S=$(date +%s)
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="/home/${USERNAME}/domains/${USERNAME}.serv00.net/public_html"
@@ -59,9 +60,8 @@ if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
     add_log "hy2 is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
-        CHECK_TIME=$(grep '"check_time"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time": *"([^"]+)".*/\1/')
+        CHECK_TIME_s=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
         C_TIME_S=$(date +%s)
-        CHECK_TIME_S=$(TZ="Asia/Shanghai" date -d "$CHECK_TIME" +%s)
         T_DIFF=$((C_TIME_S - CHECK_TIME_S))
         add_log "C_TIME_S ${C_TIME_S}"
         add_log "CHECK_TIME_S ${CHECK_TIME_S}"
@@ -74,9 +74,10 @@ if [ $process_status -eq 0 ]; then
 {
   "username": "$USERNAME",
   "num": "$NUM",
+  "check_time": "$DATE_FORMAT",
+  "check_time_s": "$C_TIME_S",
   "type": "hysteria2",
   "ip": "$C_IP",
-  "check_time": "$DATE_FORMAT",
   "port": "$PORT"
 }
 EOF
@@ -121,9 +122,10 @@ cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
   "num": "$NUM",
+  "check_time": "$DATE_FORMAT",
+  "check_time_s": "$DATE_FORMAT_S",
   "type": "hysteria2",
   "ip": "$HOST_IP",
-  "check_time": "$DATE_FORMAT",
   "port": "$PORT"
 }
 EOF

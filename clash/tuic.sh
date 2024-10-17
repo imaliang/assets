@@ -13,6 +13,7 @@ export PASSWORD=${PASSWORD:-'admin'}
 
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
+DATE_FORMAT_S=$(date +%s)
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
 NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="domains/${USERNAME}.serv00.net/public_html"
@@ -61,11 +62,29 @@ if [ $process_status -eq 0 ]; then
     echo "tuic 进程正在运行..."
     add_log "tuic is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
-        C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
-        if check_ip "$C_IP"; then
-            exit 0
-        else
-            add_log "tuic not exist, start install tuic..."
+        CHECK_TIME_s=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
+        C_TIME_S=$(date +%s)
+        T_DIFF=$((C_TIME_S - CHECK_TIME_S))
+        # 断是否已经过了一个小时（3600 秒）
+        if [ "$T_DIFF" -gt 3600 ]; then
+            add_log "start check ip..."
+            C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
+            if check_ip "$C_IP"; then
+                cat <<EOF > $HTML_DIR/cg.json
+{
+  "username": "$USERNAME",
+  "num": "$NUM",
+  "check_time": "$DATE_FORMAT",
+  "check_time_s": "$DATE_FORMAT_S",
+  "type": "tuic",
+  "ip": "$C_IP",
+  "port": "$PORT"
+}
+EOF
+                exit 0
+            else
+                add_log "ip not available, start install tuic..."
+            fi
         fi
     fi
 else
@@ -103,6 +122,8 @@ cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
   "num": "$NUM",
+  "check_time": "$DATE_FORMAT",
+  "check_time_s": "$DATE_FORMAT_S",
   "type": "tuic",
   "ip": "$HOST_IP",
   "port": "$PORT"
