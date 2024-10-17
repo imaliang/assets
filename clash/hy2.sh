@@ -1,24 +1,33 @@
 #!/bin/bash
 
 clear
+export LC_ALL=C
+export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
+export NEZHA_SERVER=${NEZHA_SERVER:-''}      
+export NEZHA_PORT=${NEZHA_PORT:-'5555'}             
+export NEZHA_KEY=${NEZHA_KEY:-''}                
 export PORT=${PORT:-'60000'} 
-# 定义用户名变量
-USER_NAME=$USER
-# 定义日志文件路径
-LOG_FILE="/home/${USER_NAME}/hy2.log"
-START_LOG_FILE="/home/${USER_NAME}/hy2s.log"
-# 定义文件大小阈值（100 KB = 1024 * 100 字节）
-MAX_LOG_SIZE=102400  # 100kb
-# 检查日志文件是否存在并获取其大小
-if [ -f "$LOG_FILE" ]; then
-    LOG_SIZE=$(stat -f%z "$LOG_FILE")
-    # 确保 LOG_SIZE 是有效的数字
-    if [ -n "$LOG_SIZE" ] && [ "$LOG_SIZE" -ge "$MAX_LOG_SIZE" ]; then
-        rm "$LOG_FILE"
-    fi
-fi
-# 定义日期格式化为东八区
+USERNAME=$(whoami)
+HOSTNAME=$(hostname)
 DATE_FORMAT=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')
+NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && HTML_DIR="domains/${USERNAME}.ct8.pl/public_html" || HTML_DIR="domains/${USERNAME}.serv00.net/public_html"
+
+LOG_FILE="${HTML_DIR}/hy.log"
+check_log_file() {
+    local log_file_path=$1
+    local logSize=$(stat -c%s "$log_file_path")
+    if [[ -n $logSize && $logSize -ge 1024000 ]]; then
+        rm "$log_file_path"
+    fi
+}
+check_log_file "$LOG_FILE"
+add_log() {
+    local new_content=$1
+    existing_content=$(cat "$LOG_FILE")
+    combined_content="$new_content\n$existing_content"
+    echo -e "$combined_content" > "$LOG_FILE"
+}
 
 check_ip() {
     local t_ip="$1"
@@ -32,39 +41,29 @@ check_ip() {
     fi
 }
 
-HOSTNAME=$(hostname)
-
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR1="domains/${USER_NAME}.ct8.pl/public_html" || WORKDIR1="domains/${USER_NAME}.serv00.net/public_html"
-
-NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BASH_REMATCH[1]}" || echo 1 )
-
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
-
 # 检查是否有 "hysteria2" 的进程在运行
-pgrep -f "config.yaml" >> "$LOG_FILE"
-process1_status=$?
-# 如果找到 "hysteria2" 进程，结束脚本的执行
-if [ $process1_status -eq 0 ]; then
+process_status=$(pgrep -f "config.yaml" >/dev/null 2>&1; echo $?)
+if [ $process_status -eq 0 ]; then
     echo "hysteria2 进程正在运行..."
-    echo "${DATE_FORMAT} - hysteria2 进程正在运行..." >> "$LOG_FILE"
-    C_IP=$(grep '"ip"' $WORKDIR1/cg.json | sed 's/.*"ip": "\(.*\)",/\1/')
-    if check_ip "$C_IP"; then
-        exit 0  # 退出脚本
-    else
-        echo "${DATE_FORMAT} - 当前ip不可用 Reinstall hy2..." >> "$LOG_FILE"
-        echo "${DATE_FORMAT} - 当前ip不可用 Reinstall hy2..." >> "$START_LOG_FILE"
+    add_log "${DATE_FORMAT} - hysteria2 进程正在运行..."
+    if [ -f "$HTML_DIR/cg.json" ]; then
+        C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
+        if check_ip "$C_IP"; then
+            exit 0
+        else
+            add_log "${DATE_FORMAT} - hy2进程不存在，准备重新安装 hy2..."
+        fi
     fi
 else
-    # 如果没有找到 "hysteria2" 进程，则启动它
-    echo "${DATE_FORMAT} - Reinstall hy2..." >> "$LOG_FILE"
-    echo "${DATE_FORMAT} - Reinstall hy2..." >> "$START_LOG_FILE"
+    add_log "${DATE_FORMAT} - hy2进程不存在，准备重新安装 hy2..."
 fi
 
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
 
 ip=$(curl -s --max-time 1.5 ipv4.ip.sb)
 if [ -z "$ip" ]; then
     for domain in "${DOMAINS[@]}"; do
-        echo "检查域名是否可用 $domain..."
+        echo "检查域名是否可用 $domain"
         if check_ip "$domain"; then
             echo "域名 $domain 可用"
             ip="$domain"
@@ -77,7 +76,7 @@ else
     if ! check_ip "$ip"; then
         ip=""
         for domain in "${DOMAINS[@]}"; do
-            echo "检查域名是否可用 $domain..."
+            echo "检查域名是否可用 $domain"
             if check_ip "$domain"; then
                 echo "域名 $domain 可用"
                 ip="$domain"
@@ -88,14 +87,17 @@ else
         done
     fi
 fi
-if [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+if [ -z "$ip" ]; then
+    HOST_IP=""
+elif [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     HOST_IP="$ip"
 else
     HOST_IP=$(host "$ip" | grep "has address" | awk '{print $4}')
 fi
-cat <<EOF > $WORKDIR1/cg.json
+cat <<EOF > $HTML_DIR/cg.json
 {
-  "username": "$USER_NAME",
+  "username": "$USERNAME",
+  "num": "$NUM",
   "type": "hysteria2",
   "ip": "$HOST_IP",
   "port": "$PORT"
@@ -103,28 +105,19 @@ cat <<EOF > $WORKDIR1/cg.json
 EOF
 # 判断 HOST_IP 是否为空
 if [ -z "$HOST_IP" ]; then
-  echo "HOST_IP 变量为空，开始停止进程..."
-  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$LOG_FILE"
-  echo "${DATE_FORMAT} - install hy2 failed, HOST_IP is null..." >> "$START_LOG_FILE"
-  pkill -u $USER
+  add_log "${DATE_FORMAT} - 找不到可用IP..."
+  echo "找不到可用IP，开始停止进程..."
+  pkill -u $USERNAME
   exit 0
 else
-  echo "HOST_IP 变量的值是: $HOST_IP"
+  echo "找到可用IP: $HOST_IP"
 fi
 
-curl -o $WORKDIR1/index.html https://raw.githubusercontent.com/imaliang/assets/master/html/rocket/index.html
-echo -e "\e[1;32m自定义配置执行完成\e[0m"
-
+curl -o $HTML_DIR/index.html https://raw.githubusercontent.com/imaliang/assets/master/html/rocket/index.html
+echo -e "\e[1;32m自定义检查执行完成\e[0m"
 echo -e "\e[1;32m-----------------------------\e[0m"
 ###################################################################
-export LC_ALL=C
-export UUID=${UUID:-'fc44fe6a-f083-4591-9c03-f8d61dc3907f'} 
-export NEZHA_SERVER=${NEZHA_SERVER:-''}      
-export NEZHA_PORT=${NEZHA_PORT:-'5555'}             
-export NEZHA_KEY=${NEZHA_KEY:-''}                
-export PORT=${PORT:-'60000'} 
-USERNAME=$(whoami)
-HOSTNAME=$(hostname)
+
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="domains/${USERNAME}.ct8.pl/logs" || WORKDIR="domains/${USERNAME}.serv00.net/logs"
 [ -d "$WORKDIR" ] || (mkdir -p "$WORKDIR" && chmod 777 "$WORKDIR" && cd "$WORKDIR")
