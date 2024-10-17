@@ -16,7 +16,7 @@ NUM=$( [[ "$HOSTNAME" =~ ^s([0-9]|[1-2][0-9]|30)\.serv00\.com$ ]] && echo "${BAS
 LOG_FILE="${HTML_DIR}/hy.log"
 check_log_file() {
     local log_file_path=$1
-    local logSize=$(stat -c%s "$log_file_path")
+    local logSize=$(stat -f%z "$log_file_path")
     if [[ -n $logSize && $logSize -ge 1024000 ]]; then
         rm "$log_file_path"
     fi
@@ -65,10 +65,8 @@ fi
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
 
 ip=$(curl -s --max-time 1.5 ipv4.ip.sb)
-if [ -n "$ip" ]; then
-    if! check_ip "$ip"; then
-        $ip= ""
-    fi
+if [ -n "$ip" ] && ! check_ip "$ip"; then
+    ip=""
 fi
 if [ -z "$ip" ]; then
     for domain in "${DOMAINS[@]}"; do
