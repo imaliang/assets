@@ -55,11 +55,11 @@ if [ $process_status -eq 0 ]; then
         if check_ip "$C_IP"; then
             exit 0
         else
-            add_log "${DATE_FORMAT} - hy2 not exist, start reinstall hy2..."
+            add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
         fi
     fi
 else
-    add_log "${DATE_FORMAT} - hy2 not exist,start reinstall hy2..."
+    add_log "${DATE_FORMAT} - hy2 not exist, start install hy2..."
 fi
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
