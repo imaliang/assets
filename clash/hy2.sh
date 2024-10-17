@@ -55,11 +55,11 @@ if [ $process_status -eq 0 ]; then
         if check_ip "$C_IP"; then
             exit 0
         else
-            add_log "${DATE_FORMAT} - hy2 not exist，start reinstall hy2..."
+            add_log "${DATE_FORMAT} - hy2 not exist, start reinstall hy2..."
         fi
     fi
 else
-    add_log "${DATE_FORMAT} - hy2 not exist，start reinstall hy2..."
+    add_log "${DATE_FORMAT} - hy2 not exist, start reinstall hy2..."
 fi
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
@@ -99,7 +99,7 @@ cat <<EOF > $HTML_DIR/cg.json
 EOF
 # 判断 HOST_IP 是否为空
 if [ -z "$HOST_IP" ]; then
-  add_log "${DATE_FORMAT} - unable to find available ip."
+  add_log "${DATE_FORMAT} - not find available ip."
   echo "找不到可用IP，开始停止进程..."
   pkill -u $USERNAME
   exit 0
