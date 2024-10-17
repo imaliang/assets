@@ -60,16 +60,17 @@ if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
     add_log "hy2 is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
-        CHECK_TIME_s=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
+        CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
         C_TIME_S=$(date +%s)
         T_DIFF=$((C_TIME_S - CHECK_TIME_S))
         add_log "C_TIME_S ${C_TIME_S}"
         add_log "CHECK_TIME_S ${CHECK_TIME_S}"
         # 断是否已经过了一个小时（3600 秒）
         if [ "$T_DIFF" -gt 180 ]; then
-            add_log "start check ip..."
             C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
+            add_log "start check ip ${C_IP}..."
             if check_ip "$C_IP"; then
+                add_log "ip available."
                 cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
