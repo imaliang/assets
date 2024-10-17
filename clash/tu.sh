@@ -129,7 +129,7 @@ ps aux | grep $(whoami) | grep -v "sshd\|bash\|grep" | awk '{print $2}' | xargs 
 # devil binexec on > /dev/null 2>&1
 
 # Download Dependency Files
-clear
+# clear
 echo -e "\e[1;35m正在安装中,请稍等...\e[0m"
 ARCH=$(uname -m) && DOWNLOAD_DIR="." && mkdir -p "$DOWNLOAD_DIR" && FILE_INFO=()
 if [ "$ARCH" == "arm" ] || [ "$ARCH" == "arm64" ] || [ "$ARCH" == "aarch64" ]; then
