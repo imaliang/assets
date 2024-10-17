@@ -40,6 +40,9 @@ add_log() {
 
 check_ip() {
     local t_ip="$1"
+    if [ -z "$t_ip" ]; then
+        return 1
+    fi
     local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/443"
     local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
     echo "$response"

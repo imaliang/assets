@@ -38,6 +38,9 @@ add_log() {
 
 check_ip() {
     local t_ip="$1"
+    if [ -z "$t_ip" ]; then
+        return 1
+    fi
     local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/22"
     local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
     echo "$response"
@@ -55,11 +58,29 @@ if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
     add_log "${DATE_FORMAT} - hy2 is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
-        C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
-        if check_ip "$C_IP"; then
-            exit 0
-        else
-            add_log "${DATE_FORMAT} - ip not available, start install hy2..."
+        CHECK_TIME=$(grep '"check_time"' "$HTML_DIR/cg.json" | sed 's/.*"check_time": "\(.*\)",/\1/')
+        C_TIME_S=$(date +%s)
+        CHECK_TIME_S=$(TZ="Asia/Shanghai" date -d "$CHECK_TIME" +%s)
+        T_DIFF=$((C_TIME_S - CHECK_TIME_S))
+        # 断是否已经过了一个小时（3600 秒）
+        if [ "$T_DIFF" -gt 180 ]; then
+            add_log "${DATE_FORMAT} - start check ip..."
+            C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
+            if check_ip "$C_IP"; then
+                cat <<EOF > $HTML_DIR/cg.json
+{
+  "username": "$USERNAME",
+  "num": "$NUM",
+  "type": "hysteria2",
+  "ip": "$C_IP",
+  "check_time": "$DATE_FORMAT",
+  "port": "$PORT"
+}
+EOF
+                exit 0
+            else
+                add_log "${DATE_FORMAT} - ip not available, start install hy2..."
+            fi
         fi
     fi
 else
@@ -99,6 +120,7 @@ cat <<EOF > $HTML_DIR/cg.json
   "num": "$NUM",
   "type": "hysteria2",
   "ip": "$HOST_IP",
+  "check_time": "$DATE_FORMAT",
   "port": "$PORT"
 }
 EOF
