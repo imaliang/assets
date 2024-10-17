@@ -48,6 +48,7 @@ check_ip() {
 }
 
 # 检查是否有 "hysteria2" 的进程在运行
+C_IP=""
 process_status=$(pgrep -f "config.yaml" >/dev/null 2>&1; echo $?)
 if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
@@ -90,6 +91,7 @@ elif [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 else
     HOST_IP=$(host "$ip" | grep "has address" | awk '{print $4}')
 fi
+
 cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
@@ -107,6 +109,11 @@ if [ -z "$HOST_IP" ]; then
   exit 0
 else
   echo "找到可用IP: $HOST_IP"
+fi
+
+if [[ $process_status -eq 0 && "$ip" == "$C_IP" ]]; then
+    echo "可用IP没变化 退出安装."
+    exit 0
 fi
 
 curl -o $HTML_DIR/index.html https://raw.githubusercontent.com/imaliang/assets/master/html/rocket/index.html
