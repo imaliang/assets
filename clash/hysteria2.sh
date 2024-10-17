@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.5"
+VERSION="1.0.6"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -63,10 +63,8 @@ if [ $process_status -eq 0 ]; then
         CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
         C_TIME_S=$(date +%s)
         T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-        add_log "C_TIME_S ${C_TIME_S}"
-        add_log "CHECK_TIME_S ${CHECK_TIME_S}"
         # 断是否已经过了一个小时（3600 秒）
-        if [ "$T_DIFF" -gt 180 ]; then
+        if [ "$T_DIFF" -gt 3600 ]; then
             C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
             add_log "start check ip ${C_IP}..."
             if check_ip "$C_IP"; then
@@ -86,6 +84,8 @@ EOF
             else
                 add_log "ip not available, start install hy2..."
             fi
+        else
+            exit 0
         fi
     fi
 else
