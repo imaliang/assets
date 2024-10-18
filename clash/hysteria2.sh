@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.6"
+VERSION="1.0.7"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -60,16 +60,16 @@ if [ $process_status -eq 0 ]; then
     echo "hy2 进程正在运行..."
     add_log "hy2 is running..."
     if [ -f "$HTML_DIR/cg.json" ]; then
-        CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
-        C_TIME_S=$(date +%s)
-        T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-        # 断是否已经过了一个小时（3600 秒）
-        if [ "$T_DIFF" -gt 3600 ]; then
-            C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
-            add_log "start check ip ${C_IP}..."
-            if check_ip "$C_IP"; then
-                add_log "ip available."
-                cat <<EOF > $HTML_DIR/cg.json
+        C_IP=$(grep '"ip"' "$HTML_DIR/cg.json" | sed 's/.*"ip": "\(.*\)",/\1/')
+        if [ -n "$C_IP" ]; then
+            CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
+            C_TIME_S=$(date +%s)
+            T_DIFF=$((C_TIME_S - CHECK_TIME_S))
+            if [ "$T_DIFF" -gt 3600 ]; then
+                add_log "start check ip ${C_IP}..."
+                if check_ip "$C_IP"; then
+                    add_log "ip available."
+                    cat <<EOF > $HTML_DIR/cg.json
 {
   "username": "$USERNAME",
   "num": "$NUM",
@@ -80,12 +80,15 @@ if [ $process_status -eq 0 ]; then
   "port": "$PORT"
 }
 EOF
-                exit 0
+                    exit 0
+                else
+                    add_log "ip not available, start install hy2..."
+                fi
             else
-                add_log "ip not available, start install hy2..."
+                exit 0
             fi
         else
-            exit 0
+            add_log "ip is null, start install hy2..."
         fi
     fi
 else
