@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.7"
+VERSION="1.0.8"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -65,7 +65,7 @@ if [ $process_status -eq 0 ]; then
             CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
             C_TIME_S=$(date +%s)
             T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-            if [ "$T_DIFF" -gt 3600 ]; then
+            if [ "$T_DIFF" -gt 360 ]; then
                 add_log "start check ip ${C_IP}..."
                 if check_ip "$C_IP"; then
                     add_log "ip available."
