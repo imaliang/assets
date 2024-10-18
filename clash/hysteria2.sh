@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.13"
+VERSION="1.1.0"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -9,6 +9,8 @@ export NEZHA_SERVER=${NEZHA_SERVER:-''}
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}             
 export NEZHA_KEY=${NEZHA_KEY:-''}                
 export PORT=${PORT:-'60000'} 
+
+
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 DATE_FORMAT_S=$(date +%s)
@@ -21,7 +23,7 @@ check_log_file() {
     local log_file_path=$1
     if [ -f "$log_file_path" ]; then
         local logSize=$(stat -f%z "$log_file_path")
-        if [[ -n $logSize && $logSize -ge 204800 ]]; then
+        if [[ -n $logSize && $logSize -ge 102400 ]]; then
             rm "$log_file_path"
         fi
     fi
@@ -45,8 +47,6 @@ check_ip1() {
     if [ -z "$t_ip" ]; then
         return 1
     fi
-    # local url="https://www.vps234.com/ipcheck/getdata"
-    # local response=$(curl -s --location --max-time 3 --request POST "$url" --header 'Referer: https://www.vps234.com/ipchecker' --data-raw "ip=${t_ip}")
     local response=$(curl -s --max-time 10 'https://www.vps234.com/ipcheck/getdata/' --data-raw "ip=${t_ip}")
     echo "host=${t_host}, ip=${t_ip}, vps234 response=${response}"
     add_log "host=${t_host}, ip=${t_ip}, vps234 response=${response}"
@@ -102,7 +102,7 @@ if [ $process_status -eq 0 ]; then
             CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
             C_TIME_S=$(date +%s)
             T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-            if [ "$T_DIFF" -gt 100 ]; then
+            if [ "$T_DIFF" -gt 3600 ]; then
                 add_log "start check ip ${C_IP}..."
                 if check_ip "$C_IP" "$C_IP"; then
                     add_log "ip available."
@@ -140,14 +140,10 @@ if [ -n "$ip" ] && ! check_ip "$ip" "$ip"; then
 fi
 if [ -z "$ip" ]; then
     for domain in "${DOMAINS[@]}"; do
-        # echo "检查域名是否可用 $domain"
         m_ip=$(host "$domain" | grep "has address" | awk '{print $4}')
         if check_ip "$domain" "$m_ip"; then
-            # echo "域名 $domain 可用"
             ip="$m_ip"
-            break  # 域名可用，跳出循环
-        # else
-        #     echo "域名 $domain 不可用"
+            break
         fi
     done
 fi
