@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.8"
+VERSION="1.0.9"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -46,6 +46,7 @@ check_ip() {
     local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/22"
     local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
     echo "$response"
+    add_log "ip=${response}, response=${response}"
     if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
         return 1  # 返回1表示不可用
     else
