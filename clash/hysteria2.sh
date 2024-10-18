@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-VERSION="1.0.9"
+VERSION="1.0.13"
 echo -e "\e[1;32mVersion-${VERSION}\e[0m"
 export LC_ALL=C
 export UUID=${UUID:-'1bda59f5-0750-498f-77a9-a7721d6346c3'} 
@@ -38,20 +38,56 @@ add_log() {
     fi
 }
 
-check_ip() {
-    local t_ip="$1"
+
+check_ip1() {
+    local t_host="$1"
+    local t_ip="$2"
+    if [ -z "$t_ip" ]; then
+        return 1
+    fi
+    # local url="https://www.vps234.com/ipcheck/getdata"
+    # local response=$(curl -s --location --max-time 3 --request POST "$url" --header 'Referer: https://www.vps234.com/ipchecker' --data-raw "ip=${t_ip}")
+    local response=$(curl -s --max-time 10 'https://www.vps234.com/ipcheck/getdata/' --data-raw "ip=${t_ip}")
+    echo "host=${t_host}, ip=${t_ip}, vps234 response=${response}"
+    add_log "host=${t_host}, ip=${t_ip}, vps234 response=${response}"
+    # 检查响应是否包含 "innerICMP":true 或 "innerTCP":true
+    if [ -z "$response" ] || ! echo "$response" | grep -Eq '"innerICMP":true|"innerTCP":true'; then
+        return 1  # 返回 1 表示不可用
+    else
+        return 0  # 返回 0 表示可用
+    fi
+}
+
+check_ip2() {
+    local t_host="$1"
+    local t_ip="$2"
     if [ -z "$t_ip" ]; then
         return 1
     fi
     local url="https://www.toolsdaquan.com/toolapi/public/ipchecking/$t_ip/22"
-    local response=$(curl -s --location --max-time 5 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
-    echo "$response"
-    add_log "ip=${response}, response=${response}"
-    if [ -z "$response" ] || ! echo "$response" | grep -q '"icmp":"success"'; then
+    local response=$(curl -s --location --max-time 10 --request GET "$url" --header 'Referer: https://www.toolsdaquan.com/ipcheck')
+    echo "host=${t_host}, ip=${t_ip}, toolsdaquan response=${response}"
+    add_log "host=${t_host}, ip=${t_ip}, toolsdaquan response=${response}"
+    if [ -z "$response" ] || ! echo "$response" | grep -Eq '"icmp":"success"|"tcp":"success"'; then
         return 1  # 返回1表示不可用
     else
         return 0  # 返回0表示可用
     fi
+}
+
+check_ip() {
+    local t_host="$1"
+    local t_ip="$2"
+    if [ -z "$t_ip" ]; then
+        return 1
+    fi
+    if check_ip1 "$t_host" "$t_ip"; then
+        return 0
+    fi
+    if check_ip2 "$t_host" "$t_ip"; then
+        return 0
+    fi
+    return 1
 }
 
 # 检查是否有 "hysteria2" 的进程在运行
@@ -66,9 +102,9 @@ if [ $process_status -eq 0 ]; then
             CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
             C_TIME_S=$(date +%s)
             T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-            if [ "$T_DIFF" -gt 360 ]; then
+            if [ "$T_DIFF" -gt 100 ]; then
                 add_log "start check ip ${C_IP}..."
-                if check_ip "$C_IP"; then
+                if check_ip "$C_IP" "$C_IP"; then
                     add_log "ip available."
                     cat <<EOF > $HTML_DIR/cg.json
 {
@@ -96,32 +132,27 @@ else
     add_log "hy2 not exist, start install hy2..."
 fi
 
-[[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("s1.ct8.pl" "cache.ct8.pl" "web.ct8.pl" "panel.ct8.pl") || DOMAINS=("s${NUM}.serv00.com" "cache${NUM}.serv00.com" "web${NUM}.serv00.com" "panel${NUM}.serv00.com")
+[[ "$HOSTNAME" == "s1.ct8.pl" ]] && DOMAINS=("cache1.ct8.pl" "web1.ct8.pl") || DOMAINS=("cache${NUM}.serv00.com" "web${NUM}.serv00.com")
 
 ip=$(curl -s --max-time 1.5 ipv4.ip.sb)
-if [ -n "$ip" ] && ! check_ip "$ip"; then
+if [ -n "$ip" ] && ! check_ip "$ip" "$ip"; then
     ip=""
 fi
 if [ -z "$ip" ]; then
     for domain in "${DOMAINS[@]}"; do
-        echo "检查域名是否可用 $domain"
-        if check_ip "$domain"; then
-            echo "域名 $domain 可用"
-            ip="$domain"
+        # echo "检查域名是否可用 $domain"
+        m_ip=$(host "$domain" | grep "has address" | awk '{print $4}')
+        if check_ip "$domain" "$m_ip"; then
+            # echo "域名 $domain 可用"
+            ip="$m_ip"
             break  # 域名可用，跳出循环
-        else
-            echo "域名 $domain 不可用"
+        # else
+        #     echo "域名 $domain 不可用"
         fi
     done
 fi
 
-if [ -z "$ip" ]; then
-    HOST_IP=""
-elif [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    HOST_IP="$ip"
-else
-    HOST_IP=$(host "$ip" | grep "has address" | awk '{print $4}')
-fi
+HOST_IP="$ip"
 
 cat <<EOF > $HTML_DIR/cg.json
 {
