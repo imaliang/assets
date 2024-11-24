@@ -102,7 +102,7 @@ if [ $process_status -eq 0 ]; then
             CHECK_TIME_S=$(grep '"check_time_s"' "$HTML_DIR/cg.json" | sed -E 's/.*"check_time_s": *"([^"]+)".*/\1/')
             C_TIME_S=$(date +%s)
             T_DIFF=$((C_TIME_S - CHECK_TIME_S))
-            if [ "$T_DIFF" -gt 3600 ]; then
+            if [ "$T_DIFF" -gt 36000 ]; then
                 add_log "start check ip ${C_IP}..."
                 if check_ip "$C_IP" "$C_IP"; then
                     add_log "ip available."
